@@ -188,29 +188,309 @@ describe "The AWS module" do
       expect(@aws.tag_difference(vpc, new_config[:tags])).to be_empty
     end
 
-    describe 'using puppet resource on the VPC' do
+    context 'using puppet resource' do
+
       before(:all) do
-        ENV['AWS_REGION'] = @default_region
-        options = {:name => "#{@name}-vpc"}
-        @result = TestExecutor.puppet_resource('ec2_vpc', options, '--modulepath ../')
+        result = PuppetManifest.new(@template, @config).apply
+        expect(result[:output].any?{ |x| x.include? 'Error:'}).to eq(false)
       end
 
-      it 'should show the correct tenancy' do
-        regex = /instance_tenancy\s*=>\s*'#{@config[:vpc_instance_tenancy]}'/
-        expect(@result.stdout).to match(regex)
+      context 'to describe an ec2_vpc' do
+
+        before(:all) do
+          ENV['AWS_REGION'] = @default_region
+          options = {:name => "#{@name}-vpc"}
+          @result = TestExecutor.puppet_resource('ec2_vpc', options, '--modulepath ../')
+        end
+
+        it 'should show the correct tenancy' do
+          regex = /instance_tenancy\s*=>\s*'#{@config[:vpc_instance_tenancy]}'/
+          expect(@result.stdout).to match(regex)
+        end
+
+        it 'should show the correct cidr block' do
+          regex = /cidr_block\s*=>\s*'#{Regexp.quote(@config[:vpc_cidr])}'/
+          expect(@result.stdout).to match(regex)
+        end
+
+        it 'should show the correct region' do
+          regex = /region\s*=>\s*'#{@config[:region]}'/
+          expect(@result.stdout).to match(regex)
+        end
+
+        it 'should show the correct tags' do
+          @config[:tags].each do |k,v|
+            regex = /'#{k}'\s*=>\s*'#{v}'/
+            expect(@result.stdout).to match(regex)
+          end
+        end
+
+        it 'should show the correct dhcp_options' do
+          pending('This test is blocked by CLOUD-234')
+          regex = /'dhcp_options'\s*=>\s*'#{@name}-options'/
+          expect(@result.stdout).to match(regex)
+        end
+
       end
 
-      it 'should show the correct cidr block' do
-        regex = /cidr_block\s*=>\s*'#{Regexp.quote(@config[:vpc_cidr])}'/
-        expect(@result.stdout).to match(regex)
+      context 'to describe an ec2_vpc_dhcp_options' do
+
+        before(:all) do
+          ENV['AWS_REGION'] = @default_region
+          options = {:name => "#{@name}-options"}
+          @result = TestExecutor.puppet_resource('ec2_vpc_dhcp_options', options, '--modulepath ../')
+        end
+
+        it 'should show the correct tags' do
+          @config[:tags].each do |k,v|
+            regex = /'#{k}'\s*=>\s*'#{v}'/
+            expect(@result.stdout).to match(regex)
+          end
+        end
+
+        it 'should show the correct region' do
+          regex = /'region'\s*=>\s*'#{@default_region}'/
+          expect(@result.stdout).to match(regex)
+        end
+
+        it 'should show the correct domain name servers' do
+          #??? needs more info
+        end
+
+        it 'should show the correct ntp servers' do
+          # needs more info
+        end
+
+        it 'should show the correct netbios name servers' do
+          # needs more info
+        end
+
+        it 'should show the correct netbios node type' do
+          regex = /'netbios_node_type'\s*=>\s*'#{@config[:netbios_node_type]}'/
+          expect(@result.stdout).to match(regex)
+        end
+
       end
 
-      it 'should show the correct region' do
-        regex = /region\s*=>\s*'#{@config[:region]}'/
-        expect(@result.stdout).to match(regex)
+      context 'to describe an ec2_vpc_routetable' do
+
+        before(:all) do
+          ENV['AWS_REGION'] = @default_region
+          options = {:name => "#{@name}-routes"}
+          @result = TestExecutor.puppet_resource('ec2_vpc_routetable', options, '--modulepath ../')
+        end
+
+        it 'should show the correct vpc' do
+          regex = /'vpc'\s*=>\s*'#{@name}-vpc'/
+          expect(result.stdout).to match(regex)
+        end
+
+        it 'should show the correct region' do
+          regex = /'region'\s*=>\s*'#{@default_region}'/
+          expect(@result.stdout).to match(regex)
+        end
+
+        it 'should show the correct routes' do
+          # to specify or in manifest or not
+        end
+
+        it 'should show the correct tags' do
+          @config[:tags].each do |k,v|
+            regex = /'#{k}'\s*=>\s*'#{v}'/
+            expect(@result.stdout).to match(regex)
+          end
+        end
+
       end
+
+      context 'to describe an ec2_vpc_subnet' do
+
+        before(:all) do
+          ENV['AWS_REGION'] = @default_region
+          options = {:name => "#{@name}-subnet"}
+          @result = TestExecutor.puppet_resource('ec2_vpc_subnet', options, '--modulepath ../')
+        end
+
+        it 'should show the correct vpc' do
+          regex = /'vpc'\s*=>\s*'#{@name}-vpc'/
+          expect(result.stdout).to match(regex)
+        end
+
+        it 'should show the correct region' do
+          regex = /'region'\s*=>\s*'#{@default_region}'/
+          expect(@result.stdout).to match(regex)
+        end
+
+        it 'should show the correct cidr_block' do
+          regex = /'cidr_block'\s*=>\s*'#{@config[:subnet_cidr]}'/
+          expect(result.stdout).to match(regex)
+        end
+
+        it 'should show the correct availability_zone' do
+          regex = /'availability_zone'\s*=>\s*'#{@config[:subnet_availability_zone]}'/
+          expect(result.stdout).to match(regex)
+        end
+
+        it 'should show the correct tags' do
+          @config[:tags].each do |k,v|
+            regex = /'#{k}'\s*=>\s*'#{v}'/
+            expect(@result.stdout).to match(regex)
+          end
+        end
+
+        it 'should show the correct route_table' do
+          regex = /'route_table'\s*=>\s*'#{@name}-routes'/
+          expect(@result.stdout).to match(regex)
+        end
+
+      end
+
+      context 'to describe an ec2_vpc_internet_gateway' do
+
+        before(:all) do
+          ENV['AWS_REGION'] = @default_region
+          options = {:name => "#{@name}-igw"}
+          @result = TestExecutor.puppet_resource('ec2_vpc_internet_gateway', options, '--modulepath ../')
+        end
+
+        it 'should show the correct region' do
+          regex = /'region'\s*=>\s*'#{@default_region}'/
+          expect(@result.stdout).to match(regex)
+        end
+
+        it 'should show the correct tags' do
+          @config[:tags].each do |k,v|
+            regex = /'#{k}'\s*=>\s*'#{v}'/
+            expect(@result.stdout).to match(regex)
+          end
+        end
+
+        it 'should show the correct vpcs' do
+          # vpc's plural ????
+        end
+
+      end
+
+      context 'to describe an ec2_vpc_customer_gateway' do
+
+        before(:all) do
+          ENV['AWS_REGION'] = @default_region
+          options = {:name => "#{@name}-cgw"}
+          @result = TestExecutor.puppet_resource('ec2_vpc_customer_gateway', options, '--modulepath ../')
+        end
+
+        it 'should show the correct ip_address' do
+          regex = /'ip_address'\s*=>\s*'#{@config[:customer_ip_address]}'/
+          expect(result.stdout).to match(regex)
+        end
+
+        it 'should show the correct bgp_asn' do
+          regex = /'bgp_asn'\s*=>\s*'#{@config[:bgp_asn]}'/
+          expect(result.stdout).to match(regex)
+        end
+
+        it 'should show the correct tags' do
+          @config[:tags].each do |k,v|
+            regex = /'#{k}'\s*=>\s*'#{v}'/
+            expect(@result.stdout).to match(regex)
+          end
+        end
+
+        it 'should show the correct region' do
+          regex = /'region'\s*=>\s*'#{@default_region}'/
+          expect(@result.stdout).to match(regex)
+        end
+
+        it 'should show the correct type' do
+          regex = /'type'\s*=>\s*'#{@config[:vpn_type]}'/
+          expect(@result.stdout).to match(regex)
+        end
+
+      end
+
+      context 'to describe an ec2_vpc_vpn' do
+
+        before(:all) do
+          ENV['AWS_REGION'] = @default_region
+          options = {:name => "#{@name}-vpn"}
+          @result = TestExecutor.puppet_resource('ec2_vpc_vpn', options, '--modulepath ../')
+        end
+
+        it 'should show the correct vpn_gateway' do
+          regex = /'vpn_gateway'\s*=>\s*'#{@name}-vgw'/
+        end
+
+        it 'should show the correct customer_gateway' do
+          regex = /'customer_gateway'\s*=>\s*'#{@name}-cgw'/
+          expect(@result.stdout).to match(regex)
+        end
+
+        it 'should show the correct type' do
+          regex = /'type'\s*=>\s*'#{@config[:vpn_type]}'/
+          expect(@result.stdout).to match(regex)
+        end
+
+        it 'should show the correct routes' do
+          #routes plural
+
+        end
+
+        it 'should show the correct static_routes' do
+          regex = /'static_routes'\s*=>\s*'#{@config[:static_routes].to_s}'/
+          expect(result.stdout).to match(regex)
+        end
+
+        it 'should show the correct region' do
+          regex = /'region'\s*=>\s*'#{@default_region}'/
+          expect(@result.stdout).to match(regex)
+        end
+
+        it 'should show the correct tags' do
+          @config[:tags].each do |k,v|
+            regex = /'#{k}'\s*=>\s*'#{v}'/
+            expect(@result.stdout).to match(regex)
+          end
+        end
+
+      end
+
+      context 'to describe an ec2_vpc_vpn_gateway' do
+
+        before(:all) do
+          ENV['AWS_REGION'] = @default_region
+          options = {:name => "#{@name}-vgw"}
+          @result = TestExecutor.puppet_resource('ec2_vpc_vpn_gateway', options, '--modulepath ../')
+        end
+
+        it 'should show the correct tags' do
+          @config[:tags].each do |k,v|
+            regex = /'#{k}'\s*=>\s*'#{v}'/
+            expect(@result.stdout).to match(regex)
+          end
+        end
+
+        it 'should show the correct vpc' do
+          regex = /'vpc'\s*=>\s*'#{@name}-vpc'/
+          expect(result.stdout).to match(regex)
+        end
+
+        it 'should show the correct region' do
+          regex = /'region'\s*=>\s*'#{@default_region}'/
+          expect(@result.stdout).to match(regex)
+        end
+
+        it 'should show the correct availability_zone' do
+          # does not show? file bug
+        end
+
+        it 'should show the correct type' do
+          regex = /'type'\s*=>\s*'#{@config[:vpn_type]}'/
+          expect(@result.stdout).to match(regex)
+        end
+
+      end
+
     end
-
   end
 
 end
