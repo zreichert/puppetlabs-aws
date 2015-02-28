@@ -59,6 +59,7 @@ describe "The AWS module" do
   end
 
   describe 'when creating a new VPC environment' do
+    #TODO pair down to only what is required !!!!
 
     before(:all) do
       @name = "#{PuppetManifest.env_id}-#{SecureRandom.uuid}"
@@ -491,6 +492,41 @@ describe "The AWS module" do
       end
 
     end
+  end
+
+  describe 'createing a new VPC environment with all possible properties' do
+
+    before(:all) do
+      @name = "#{PuppetManifest.env_id}-#{SecureRandom.uuid}"
+      ip_address = generate_ip
+      region = 'sa-east-1'
+      @config = {
+        :name => @name,
+        :region => region,
+        :ensure => 'present',
+        :netbios_node_type => 2,
+        :vpc_cidr => '10.0.0.0/16',
+        :vpc_instance_tenancy => 'default',
+        :subnet_cidr => '10.0.0.0/24',
+        :subnet_availability_zone => "#{region}a",
+        :vpn_type => 'ipsec.1',
+        :customer_ip_address => ip_address,
+        :bgp_asn => '65000',
+        :vpn_route => '0.0.0.0/0',
+        :static_routes => true,
+        :tags => {
+          :department => 'engineering',
+          :project => 'cloud',
+          :created_by => 'aws-acceptance',
+        },
+      }
+    end
+
+    after(:all) do
+
+    end
+
+
   end
 
 end
