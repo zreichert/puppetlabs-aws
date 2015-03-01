@@ -501,28 +501,80 @@ describe "The AWS module" do
       ip_address = generate_ip
       region = 'sa-east-1'
       @config = {
-        :name => @name,
-        :region => region,
-        :ensure => 'present',
-        :netbios_node_type => 2,
-        :vpc_cidr => '10.0.0.0/16',
-        :vpc_instance_tenancy => 'default',
-        :subnet_cidr => '10.0.0.0/24',
-        :subnet_availability_zone => "#{region}a",
-        :vpn_type => 'ipsec.1',
-        :customer_ip_address => ip_address,
-        :bgp_asn => '65000',
-        :vpn_route => '0.0.0.0/0',
-        :static_routes => true,
-        :tags => {
-          :department => 'engineering',
-          :project => 'cloud',
-          :created_by => 'aws-acceptance',
+        # shared properties
+        :name                       => @name,
+        :region                     => region,
+        :ensure                     => 'present',
+        :tags                       => {
+          :department     => 'engineering',
+          :project        => 'cloud',
+          :created_by     => 'aws-acceptance',
         },
+        :vpn_type                   => 'ipsec.1',
+        # ec2_vpc properties
+        :vpc_cidr                   => '10.0.0.0/16',
+        :dhcp_options_setting       => "#{@name}-options",
+        :vpc_instance_tenancy       => 'default',
+        # ec2_vpc_dhcp_options properties
+        :netbios_node_type          => 2,
+        :netbios_name_servers       => ['172.16.48.16', '172.16.48.32','172.16.48.48'],
+        :ntp_servers                => ['172.16.32.16', '172.16.32.32','172.16.32.48'],
+        :domain_name_servers        => ['172.16.16.16', '172.16.16.32','172.16.16.48'],
+        :domain_name                => ['example.com', 'example2.com', 'example3.com'],
+        # ec2_vpc_routetable properties
+        :routetable_vpc_setting     => "#{@name}-routes",
+        # put a real igw in the routes
+        :route_settings             => [
+          {
+            # igw
+            :destination_cidr_block => '10.0.0.0/16',
+            :gateway          => "#{@name}-igw",
+          },
+          {
+            # vgw
+            :destination_cidr_block => '10.0.0.0/16',
+            :gateway          => "#{@name}-vgw",
+          },
+          {
+            :destination_cidr_block => '10.0.0.0/16',
+            :gateway          => 'local',
+          }
+        ],
+        # this is very complicated!!!!! skip for now
+        # ec2_vpc_subnet properties
+        :subnet_vpc_setting         => "#{@name}-subnet",
+        :subnet_cidr                => '10.0.0.0/24',
+        :subnet_availability_zone   => "#{region}a",
+        :subnet_route_table_setting => "#{@name}-routes",
+        # ec2_vpc_internet_gateway properties
+        :igw_vpc_setting            => ["#{@name}-vpc"], #TODO make test that adds vpcs to this gateway
+        # ec2_vpc_customer_gateway properties
+        :customer_ip_address        => ip_address,
+        :bgp_asn                    => '65000',
+        # ec2_vpc_vpn properties
+        :vpn_vgw_setting            => "#{@name}-vgw",
+        :vpn_cgw_setting            => "#{@name}-cgw",
+        :vpn_routes                 => ['0.0.0.0/0'],
+        :static_routes              => false,
+        # ec2_vpc_vpn_gateway properites
+        :vgw_vpc_setting            => "#{@name}-vpc",
+        :vgw_availability_zone      => "#{@region}a",
       }
+      @template = 'vpc_complete.pp.tmpl'
+      @result = PuppetManifest.new(@template, @config).apply
+      require 'pry'; binding.pry
+      expect(@result[:output].any?{ |x| x.include? 'Error:'}).to eq(false)
     end
 
     after(:all) do
+      # remove all resources
+      template = 'vpc_complete_delete.pp.tmpl'
+      config = {:name => @config[:name], :region => @config[:region]}
+      result = PuppetManifest.new(template, config).apply
+      expect(result[:output].any?{ |x| x.include? 'Error:'}).to eq(false)
+    end
+
+    it 'is a test' do
 
     end
 
