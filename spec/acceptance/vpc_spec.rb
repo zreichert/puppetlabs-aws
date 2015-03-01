@@ -522,17 +522,17 @@ describe "The AWS module" do
         :domain_name_servers        => ['172.16.16.16', '172.16.16.32','172.16.16.48'],
         :domain_name                => ['example.com', 'example2.com', 'example3.com'],
         # ec2_vpc_routetable properties
-        :routetable_vpc_setting     => "#{@name}-routes",
+        :routetable_vpc_setting     => "#{@name}-vpc",
         # put a real igw in the routes
         :route_settings             => [
           {
             # igw
-            :destination_cidr_block => '10.0.0.0/16',
+            :destination_cidr_block => '10.10.10.0/16',
             :gateway          => "#{@name}-igw",
           },
           {
             # vgw
-            :destination_cidr_block => '10.0.0.0/16',
+            :destination_cidr_block => '10.10.0.0/16',
             :gateway          => "#{@name}-vgw",
           },
           {
@@ -542,7 +542,7 @@ describe "The AWS module" do
         ],
         # this is very complicated!!!!! skip for now
         # ec2_vpc_subnet properties
-        :subnet_vpc_setting         => "#{@name}-subnet",
+        :subnet_vpc_setting         => "#{@name}-vpc",
         :subnet_cidr                => '10.0.0.0/24',
         :subnet_availability_zone   => "#{region}a",
         :subnet_route_table_setting => "#{@name}-routes",
@@ -555,10 +555,10 @@ describe "The AWS module" do
         :vpn_vgw_setting            => "#{@name}-vgw",
         :vpn_cgw_setting            => "#{@name}-cgw",
         :vpn_routes                 => ['0.0.0.0/0'],
-        :static_routes              => false,
+        :static_routes              => true,
         # ec2_vpc_vpn_gateway properites
         :vgw_vpc_setting            => "#{@name}-vpc",
-        :vgw_availability_zone      => "#{@region}a",
+        :vgw_availability_zone      => "#{region}a",
       }
       @template = 'vpc_complete.pp.tmpl'
       @result = PuppetManifest.new(@template, @config).apply
