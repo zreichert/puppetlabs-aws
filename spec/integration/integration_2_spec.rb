@@ -68,7 +68,7 @@ describe 'User Scenario for overlapping security groups' do
       on(master, 'rm -f /etc/puppetlabs/puppet/manifests/site.pp')
       create_remote_file(master, '/etc/puppetlabs/puppet/environments/production/manifests/site.pp', @manifest)
       on(master, 'chmod 777 /etc/puppetlabs/puppet/environments/production/manifests/site.pp')
-      # initiate a puppet run
+      # puppet run
       on(@provisioner, puppet('agent --test'), {:acceptable_exit_codes => [0,2]})
     end
 
@@ -111,19 +111,25 @@ describe 'User Scenario for overlapping security groups' do
 
   end
 
-  context 'teardown the ec2 instances' do
+  context 'teardown the ec2 instances with puppet resource' do
 
-    before(:all) do
+    it 'removes instance 1' do
       on(@provisioner, puppet("resource ec2_instance #{@instance_name_1} ensure=absent region=#{@region}"))
-      on(@provisioner, puppet("resource ec2_instance #{@instance_name_2} ensure=absent region=#{@region}"))
-      on(@provisioner, puppet("resource ec2_instance #{@instance_name_3} ensure=absent region=#{@region}"))
-      on(@provisioner, puppet("resource ec2_instance #{@instance_name_4} ensure=absent region=#{@region}"))
+      expect{@aws.get_instance(@config[:instance_name_1])}.to raise_error
     end
 
-    it 'ec2 instances removed' do
-      expect{@aws.get_instance(@config[:instance_name_1])}.to raise_error
+    it 'removes instance 2' do
+      on(@provisioner, puppet("resource ec2_instance #{@instance_name_2} ensure=absent region=#{@region}"))
       expect{@aws.get_instance(@config[:instance_name_2])}.to raise_error
+    end
+
+    it 'removes instance 3' do
+      on(@provisioner, puppet("resource ec2_instance #{@instance_name_3} ensure=absent region=#{@region}"))
       expect{@aws.get_instance(@config[:instance_name_3])}.to raise_error
+    end
+
+    it 'removes instance 4' do
+      on(@provisioner, puppet("resource ec2_instance #{@instance_name_4} ensure=absent region=#{@region}"))
       expect{@aws.get_instance(@config[:instance_name_4])}.to raise_error
     end
 
@@ -131,15 +137,18 @@ describe 'User Scenario for overlapping security groups' do
 
   context 'teardown the security groups' do
 
-    before(:all) do
+    it 'removes security goup 1' do
       on(@provisioner, puppet("resource ec2_securitygroup #{@group_name_1} ensure=absent region=#{@region}"))
-      on(@provisioner, puppet("resource ec2_securitygroup #{@group_name_2} ensure=absent region=#{@region}"))
-      on(@provisioner, puppet("resource ec2_securitygroup #{@group_name_3} ensure=absent region=#{@region}"))
+      expect{@aws.get_group(@config[:group_name_1])}.to raise_error
     end
 
-    it 'security groups removed' do
-      expect{@aws.get_group(@config[:group_name_1])}.to raise_error
+    it 'removes security goup 2' do
+      on(@provisioner, puppet("resource ec2_securitygroup #{@group_name_2} ensure=absent region=#{@region}"))
       expect{@aws.get_group(@config[:group_name_2])}.to raise_error
+    end
+
+    it 'removes security goup 3' do
+      on(@provisioner, puppet("resource ec2_securitygroup #{@group_name_3} ensure=absent region=#{@region}"))
       expect{@aws.get_group(@config[:group_name_3])}.to raise_error
     end
 

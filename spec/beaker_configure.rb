@@ -18,12 +18,16 @@ RSpec.configure do |c|
       ensure    => present,
       provider  => pe_gem,
     }
+    package{'retries':
+      ensure    => present,
+      provider  => pe_gem,
+    }
     EOS
     apply_manifest_on(@provisioner, pp)
     on(@provisioner, "mkdir #{agent_home}/.aws")
     create_remote_file(@provisioner, "#{agent_home}/.aws/credentials", file.read)
     # configure the master
-    on(master, '/opt/puppet/bin/puppetserver gem install aws-sdk-core')
+    on(master, '/opt/puppet/bin/puppetserver gem install aws-sdk-core retries')
     # restart puppet server
     on(master, "puppet resource service pe-puppetserver ensure=stopped")
     on(master, "puppet resource service pe-puppetserver ensure=running")
