@@ -33,7 +33,7 @@ describe 'User Scenario via PMT master & agent' do
         :instance_type => 't1.micro',
         :ec2_availability_zone => 'sa-east-1a',
         :region => @region,
-        :image_id => 'ami-41e85d5c',
+        :image_id => 'ami-67a60d7a',
         :ensure => 'present',
         :tags => {
           :department => 'engineering',
