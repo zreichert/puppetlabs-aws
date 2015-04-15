@@ -17,6 +17,7 @@ describe 'User Scenario via PMT master & agent' do
 
   context 'PMT install' do
     it 'installs from the staging forge' do
+      reuqire 'pry'; binding.pry
       on(master, puppet("module install puppetlabs-aws --version #{ENV['PKG_VERSION']} --module_repository=#{ENV['SPEC_FORGE']}"))
     end
   end
@@ -67,8 +68,8 @@ describe 'User Scenario via PMT master & agent' do
       on(@provisioner, puppet('agent --test'), {:acceptable_exit_codes => [0,2]})
     end
 
-    after(:all)
-      @instance = @aws.get_instance(@config[:instance_name]) do
+    after(:all) do
+      @instance = @aws.get_instance(@config[:instance_name])
       @aws.ec2_client.wait_until(:instance_running, instance_ids:[@instance.instance_id])
       on(@provisioner, "puppet resource ec2_instance #{@instance_name} ensure=absent")
       @aws.ec2_client.wait_until(:instance_terminated, instance_ids:[@instance.instance_id])

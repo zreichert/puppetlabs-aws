@@ -32,7 +32,7 @@ RSpec::Core::RakeTask.new(:integration) do |t|
   t.pattern = 'spec/integration/integration_1_spec.rb'
   ENV['BEAKER_setfile'] ||= 'spec/integration/nodesets/rhel7.yaml'
   ENV['SPEC_FORGE'] ||= 'https://api-forge-aio01-qatest.puppetlabs.com/'
-  ENV['SPEC_VERSION'] ||= '1.0.0-b20124-13673734'
+  ENV['PKG_VERSION'] ||= '1.0.0-b20124-13673734'
 end
 
 task :metadata do
