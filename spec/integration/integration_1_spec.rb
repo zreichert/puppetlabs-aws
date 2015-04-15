@@ -52,10 +52,12 @@ describe 'User Scenario via PMT master & agent' do
         ],
         :elb_availability_zones => 'sa-east-1a',
         :listeners => [
-          {
-            :protocol => 'tcp',
-            :port     => 80,
-          }
+            {
+              :protocol           => 'TCP',
+              :load_balancer_port => 80,
+              :instance_protocol  => 'TCP',
+              :instance_port      => 80,
+            }
           ],
         :balanced_instances => [@instance_name],
       }
