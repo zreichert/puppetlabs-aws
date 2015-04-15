@@ -29,12 +29,10 @@ end
 
 desc "Run integration tests"
 RSpec::Core::RakeTask.new(:integration) do |t|
-  t.pattern = 'spec/acceptance/integration'
-  ENV['BEAKER_setfile'] ||= 'spec/acceptance/beaker/nodesets/rhel7.yaml'
+  t.pattern = 'spec/integration/integration_1_spec.rb'
+  ENV['BEAKER_setfile'] ||= 'spec/integration/nodesets/rhel7.yaml'
   ENV['SPEC_FORGE'] ||= 'https://api-forge-aio01-qatest.puppetlabs.com/'
-  unless ENV['SPEC_VERSION']
-    raise StandardError 'You must specify the environment variable SPEC_VERSION'
-  end
+  ENV['SPEC_VERSION'] ||= '1.0.0-b20124-13673734'
 end
 
 task :metadata do
@@ -47,3 +45,5 @@ task :test => [
   :spec,
   :metadata,
 ]
+
+desc ""

@@ -68,7 +68,7 @@ describe 'User Scenario via PMT master & agent' do
     end
 
     after(:all)
-      @instance = @aws.get_instance(@config[:instance_name])
+      @instance = @aws.get_instance(@config[:instance_name]) do
       @aws.ec2_client.wait_until(:instance_running, instance_ids:[@instance.instance_id])
       on(@provisioner, "puppet resource ec2_instance #{@instance_name} ensure=absent")
       @aws.ec2_client.wait_until(:instance_terminated, instance_ids:[@instance.instance_id])
