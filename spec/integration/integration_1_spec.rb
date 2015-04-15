@@ -17,7 +17,7 @@ describe 'User Scenario via PMT master & agent' do
 
   context 'PMT install' do
     it 'installs from the staging forge' do
-      reuqire 'pry'; binding.pry
+      require 'pry'; binding.pry
       on(master, puppet("module install puppetlabs-aws --version #{ENV['PKG_VERSION']} --module_repository=#{ENV['SPEC_FORGE']}"))
     end
   end
