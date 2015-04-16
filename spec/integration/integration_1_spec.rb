@@ -17,7 +17,6 @@ describe 'User Scenario via PMT master & agent' do
 
   context 'PMT install' do
     it 'installs from the staging forge' do
-      require 'pry'; binding.pry
       on(master, puppet("module install puppetlabs-aws --version #{ENV['PKG_VERSION']} --module_repository=#{ENV['SPEC_FORGE']}"))
     end
   end
@@ -68,6 +67,7 @@ describe 'User Scenario via PMT master & agent' do
       on(master, 'chmod 777 /etc/puppetlabs/puppet/environments/production/manifests/site.pp')
       # initiate a puppet run
       on(@provisioner, puppet('agent --test'), {:acceptable_exit_codes => [0,2]})
+      require 'pry'; binding.pry
     end
 
     after(:all) do
